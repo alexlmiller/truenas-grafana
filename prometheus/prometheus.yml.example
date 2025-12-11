@@ -1,0 +1,33 @@
+# Example Prometheus configuration for TrueNAS monitoring
+# Add these scrape configs to your prometheus.yml
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alert rules
+rule_files:
+  - /etc/prometheus/rules/truenas.rules.yml
+
+scrape_configs:
+  # TrueNAS Custom Exporter (replication, apps, VMs)
+  - job_name: 'truenas'
+    static_configs:
+      - targets: ['localhost:9814']
+        labels:
+          service: 'truenas-exporter'
+    # Relabel to use 'host' label from exporter as 'instance'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # TrueNAS Graphite Exporter (system metrics)
+  - job_name: 'truenas-graphite'
+    static_configs:
+      - targets: ['localhost:9108']
+        labels:
+          service: 'graphite-exporter'
+
+# If using VictoriaMetrics instead of Prometheus:
+# remote_write:
+#   - url: "http://localhost:8428/api/v1/write"

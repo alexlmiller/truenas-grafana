@@ -1,0 +1,17 @@
+# Grafana Dashboard Provisioning Configuration
+# Copy this to /etc/grafana/provisioning/dashboards/truenas.yml
+
+apiVersion: 1
+
+providers:
+  - name: 'TrueNAS'
+    orgId: 1
+    folder: 'TrueNAS'
+    folderUid: 'truenas'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/truenas
+      # Or wherever you placed the dashboard JSON file

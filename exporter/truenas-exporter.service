@@ -1,0 +1,31 @@
+[Unit]
+Description=TrueNAS Exporter (Prometheus metrics for TrueNAS)
+Documentation=https://github.com/alexlmiller/truenas-grafana
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/truenas-exporter/truenas-exporter.py --config /etc/truenas-exporter/config.yaml
+Restart=always
+RestartSec=5
+
+# Run as non-root user (create with: useradd -r -s /bin/false prometheus)
+User=prometheus
+Group=prometheus
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+
+# Allow network access
+PrivateNetwork=no
+
+[Install]
+WantedBy=multi-user.target

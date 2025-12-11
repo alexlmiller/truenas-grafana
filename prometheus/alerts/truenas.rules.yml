@@ -1,0 +1,199 @@
+# Prometheus Alert Rules for TrueNAS Monitoring
+# Add this file to your Prometheus rules directory (e.g., /etc/prometheus/rules/)
+# Reference: https://github.com/alexlmiller/truenas-grafana
+
+groups:
+  - name: truenas-replication
+    interval: 1m
+    rules:
+      # API Unreachable - Critical
+      - alert: TrueNASAPIUnreachable
+        expr: truenas_replication_up == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: truenas
+        annotations:
+          summary: "TrueNAS API unreachable on {{ $labels.host }}"
+          description: "Cannot reach TrueNAS API on {{ $labels.host }}. Replication monitoring is unavailable."
+          runbook_url: "https://github.com/alexlmiller/truenas-grafana/blob/main/docs/TROUBLESHOOTING.md#api-unreachable"
+
+      # Replication Task Failed - Critical
+      - alert: TrueNASReplicationFailed
+        expr: truenas_replication_state == -1
+        for: 0s
+        labels:
+          severity: critical
+          service: truenas
+        annotations:
+          summary: "TrueNAS replication task failed on {{ $labels.host }}"
+          description: "Replication task '{{ $labels.task_name }}' on {{ $labels.host }} has failed. Check TrueNAS logs for details."
+          runbook_url: "https://github.com/alexlmiller/truenas-grafana/blob/main/docs/TROUBLESHOOTING.md#replication-failed"
+
+      # Replication Overdue - Warning
+      - alert: TrueNASReplicationOverdue
+        expr: truenas_replication_age_seconds > (truenas_replication_expected_interval_seconds * 2)
+        for: 5m
+        labels:
+          severity: warning
+          service: truenas
+        annotations:
+          summary: "TrueNAS replication overdue on {{ $labels.host }}"
+          description: "Replication task '{{ $labels.task_name }}' on {{ $labels.host }} has not run in over 2x its expected interval. Current age: {{ $value | humanizeDuration }}"
+          runbook_url: "https://github.com/alexlmiller/truenas-grafana/blob/main/docs/TROUBLESHOOTING.md#replication-overdue"
+
+  - name: truenas-apps
+    interval: 1m
+    rules:
+      # App Crashed - Warning
+      - alert: TrueNASAppCrashed
+        expr: truenas_app_state == -1
+        for: 2m
+        labels:
+          severity: warning
+          service: truenas
+        annotations:
+          summary: "TrueNAS app crashed on {{ $labels.host }}"
+          description: "App '{{ $labels.app }}' on {{ $labels.host }} has crashed."
+
+      # App Stopped Unexpectedly - Info
+      # Uncomment if you want alerts for stopped apps
+      # - alert: TrueNASAppStopped
+      #   expr: truenas_app_state == 0
+      #   for: 5m
+      #   labels:
+      #     severity: info
+      #     service: truenas
+      #   annotations:
+      #     summary: "TrueNAS app stopped on {{ $labels.host }}"
+      #     description: "App '{{ $labels.app }}' on {{ $labels.host }} is stopped."
+
+  - name: truenas-vms
+    interval: 1m
+    rules:
+      # VM in Error State - Warning
+      - alert: TrueNASVMError
+        expr: truenas_vm_state == -1
+        for: 2m
+        labels:
+          severity: warning
+          service: truenas
+        annotations:
+          summary: "TrueNAS VM error on {{ $labels.host }}"
+          description: "VM '{{ $labels.vm }}' on {{ $labels.host }} is in error state."
+
+      # Incus Instance Error - Warning
+      - alert: TrueNASIncusError
+        expr: truenas_virt_state == -1
+        for: 2m
+        labels:
+          severity: warning
+          service: truenas
+        annotations:
+          summary: "TrueNAS Incus instance error on {{ $labels.host }}"
+          description: "Incus {{ $labels.type }} '{{ $labels.instance }}' on {{ $labels.host }} is in error state."
+
+  - name: truenas-system
+    interval: 1m
+    rules:
+      # High CPU Temperature - Warning
+      - alert: TrueNASHighCPUTemp
+        expr: max(cpu_temperature) by (host) > 75
+        for: 5m
+        labels:
+          severity: warning
+          service: truenas
+        annotations:
+          summary: "High CPU temperature on {{ $labels.host }}"
+          description: "CPU temperature on {{ $labels.host }} is {{ $value | printf \"%.1f\" }}°C"
+
+      # Critical CPU Temperature - Critical
+      - alert: TrueNASCriticalCPUTemp
+        expr: max(cpu_temperature) by (host) > 85
+        for: 2m
+        labels:
+          severity: critical
+          service: truenas
+        annotations:
+          summary: "Critical CPU temperature on {{ $labels.host }}"
+          description: "CPU temperature on {{ $labels.host }} is {{ $value | printf \"%.1f\" }}°C - immediate attention required!"
+
+      # High Disk Temperature - Warning
+      - alert: TrueNASHighDiskTemp
+        expr: disk_temperature > 50
+        for: 10m
+        labels:
+          severity: warning
+          service: truenas
+        annotations:
+          summary: "High disk temperature on {{ $labels.host }}"
+          description: "Disk {{ $labels.serial }} on {{ $labels.host }} is {{ $value | printf \"%.1f\" }}°C"
+
+      # High Memory Usage - Warning
+      - alert: TrueNASHighMemoryUsage
+        expr: (1 - (truenas_meminfo{type="available"} / truenas_meminfo{type="total"})) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+          service: truenas
+        annotations:
+          summary: "High memory usage on {{ $labels.host }}"
+          description: "Memory usage on {{ $labels.host }} is {{ $value | printf \"%.1f\" }}%"
+
+      # High System Load - Warning
+      - alert: TrueNASHighLoad
+        expr: system_load{kind="load1"} > 8
+        for: 15m
+        labels:
+          severity: warning
+          service: truenas
+        annotations:
+          summary: "High system load on {{ $labels.host }}"
+          description: "1-minute load average on {{ $labels.host }} is {{ $value | printf \"%.2f\" }}"
+
+  - name: truenas-ups
+    interval: 1m
+    rules:
+      # Low UPS Battery - Warning
+      - alert: TrueNASLowUPSBattery
+        expr: ups_charge_percent < 50
+        for: 2m
+        labels:
+          severity: warning
+          service: truenas
+        annotations:
+          summary: "Low UPS battery on {{ $labels.host }}"
+          description: "UPS battery on {{ $labels.host }} is at {{ $value | printf \"%.0f\" }}%"
+
+      # Critical UPS Battery - Critical
+      - alert: TrueNASCriticalUPSBattery
+        expr: ups_charge_percent < 20
+        for: 1m
+        labels:
+          severity: critical
+          service: truenas
+        annotations:
+          summary: "Critical UPS battery on {{ $labels.host }}"
+          description: "UPS battery on {{ $labels.host }} is at {{ $value | printf \"%.0f\" }}% - prepare for shutdown!"
+
+      # UPS On Battery - Warning
+      - alert: TrueNASUPSOnBattery
+        expr: ups_voltage{type="input"} < 100
+        for: 1m
+        labels:
+          severity: warning
+          service: truenas
+        annotations:
+          summary: "UPS running on battery on {{ $labels.host }}"
+          description: "Input voltage is {{ $value | printf \"%.0f\" }}V - UPS may be running on battery power."
+
+      # Low UPS Runtime - Critical
+      - alert: TrueNASLowUPSRuntime
+        expr: ups_runtime_seconds < 300
+        for: 1m
+        labels:
+          severity: critical
+          service: truenas
+        annotations:
+          summary: "Low UPS runtime on {{ $labels.host }}"
+          description: "UPS runtime on {{ $labels.host }} is {{ $value | humanizeDuration }} - prepare for shutdown!"

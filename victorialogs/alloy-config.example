@@ -1,0 +1,139 @@
+// Grafana Alloy Configuration for TrueNAS Log Collection
+// Add to your existing Alloy config or use standalone
+
+// =============================================================================
+// TrueNAS Syslog Receiver
+// =============================================================================
+// Receives syslog from TrueNAS via UDP on port 6514
+// TrueNAS sends RFC5424 formatted syslog messages
+
+loki.source.syslog "truenas" {
+  listener {
+    address  = "0.0.0.0:6514"
+    protocol = "udp"
+    labels   = {
+      job = "truenas",
+    }
+  }
+
+  forward_to = [loki.process.truenas.receiver]
+}
+
+// =============================================================================
+// Log Processing Pipeline
+// =============================================================================
+
+loki.process "truenas" {
+  // Extract hostname from syslog header
+  stage.regex {
+    expression = "(?P<syslog_host>[\\w.-]+)\\s+"
+  }
+
+  // Add host label
+  stage.labels {
+    values = {
+      host = "syslog_host",
+    }
+  }
+
+  // Extract application name and PID
+  stage.regex {
+    expression = "\\s(?P<app>[\\w.-]+)\\[?(?P<pid>\\d*)\\]?:"
+  }
+
+  stage.labels {
+    values = {
+      app = "",
+    }
+  }
+
+  // Detect log level from severity or message content
+  stage.regex {
+    expression = "(?i)\\b(?P<detected_level>emerg|alert|crit|err|error|warn|warning|notice|info|debug)\\b"
+  }
+
+  stage.template {
+    source   = "level"
+    template = "{{ if .detected_level }}{{ .detected_level }}{{ else }}info{{ end }}"
+  }
+
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+
+  // Identify service types for easier filtering
+  stage.match {
+    selector = "{app=~\"smbd|nmbd\"}"
+    stage.static_labels {
+      values = {
+        service = "smb",
+      }
+    }
+  }
+
+  stage.match {
+    selector = "{app=~\"nfsd|mountd|rpcbind\"}"
+    stage.static_labels {
+      values = {
+        service = "nfs",
+      }
+    }
+  }
+
+  stage.match {
+    selector = "{app=~\"zed|zpool|zfs\"}"
+    stage.static_labels {
+      values = {
+        service = "zfs",
+      }
+    }
+  }
+
+  stage.match {
+    selector = "{app=~\"iscsitarget|ctld\"}"
+    stage.static_labels {
+      values = {
+        service = "iscsi",
+      }
+    }
+  }
+
+  // Tag backup/replication related logs
+  stage.match {
+    selector = "{} |~ \"(?i)(replication|snapshot|backup|zfs send|zfs recv)\""
+    stage.static_labels {
+      values = {
+        service = "backup",
+      }
+    }
+  }
+
+  forward_to = [loki.write.victorialogs.receiver]
+}
+
+// =============================================================================
+// VictoriaLogs Output
+// =============================================================================
+
+loki.write "victorialogs" {
+  endpoint {
+    url = "http://localhost:9428/insert/loki/api/v1/push"
+  }
+
+  // Optional: add external labels to all logs
+  external_labels = {
+    source = "truenas",
+  }
+}
+
+// =============================================================================
+// Alternative: Loki Output (if using Loki instead of VictoriaLogs)
+// =============================================================================
+
+// loki.write "loki" {
+//   endpoint {
+//     url = "http://localhost:3100/loki/api/v1/push"
+//   }
+// }

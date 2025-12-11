@@ -1,0 +1,27 @@
+[Unit]
+Description=Graphite Exporter (Prometheus metrics from TrueNAS Graphite)
+Documentation=https://github.com/prometheus/graphite_exporter
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/graphite_exporter \
+    --graphite.listen-address=:2003 \
+    --web.listen-address=:9108 \
+    --graphite.mapping-config=/etc/graphite_exporter/graphite_mapping.conf
+
+Restart=always
+RestartSec=5
+
+# Run as non-root user
+User=prometheus
+Group=prometheus
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

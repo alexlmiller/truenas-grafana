@@ -1,0 +1,10 @@
+# TrueNAS Exporter has no external dependencies!
+# It uses only Python standard library modules:
+# - http.server
+# - urllib.request
+# - json
+# - ssl
+# - argparse
+# - logging
+
+# Minimum Python version: 3.6+

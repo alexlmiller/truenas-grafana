@@ -1,0 +1,27 @@
+# TrueNAS Exporter Configuration
+# Copy this file to config.yaml and update with your settings
+
+# Port for the exporter to listen on
+listen_port: 9814
+
+# TrueNAS targets to monitor
+# You can monitor multiple TrueNAS systems from a single exporter instance
+targets:
+  - name: "nas-primary"
+    api_url: "https://truenas.local"
+    api_token: "YOUR_API_TOKEN_HERE"
+    verify_ssl: false
+
+  # Example: Add a second TrueNAS for offsite backup monitoring
+  # - name: "nas-backup"
+  #   api_url: "https://truenas-backup.example.com"
+  #   api_token: "BACKUP_NAS_API_TOKEN"
+  #   verify_ssl: true
+
+# How to generate an API token in TrueNAS:
+# 1. Log into TrueNAS web UI
+# 2. Go to top-right user menu -> API Keys
+# 3. Click "Add" to create a new API key
+# 4. Give it a name like "prometheus-exporter"
+# 5. Copy the generated token (shown only once!)
+# 6. Paste it as the api_token value above
