@@ -4,7 +4,8 @@
 
 Complete monitoring solution for TrueNAS systems using Prometheus and Grafana.
 
-![Dashboard Preview](docs/images/dashboard-preview.png)
+![Dashboard Prevew](https://github.com/user-attachments/assets/9007728c-fdff-4a7e-b4ec-27ba3d0045f6)
+
 
 ## Features
 
