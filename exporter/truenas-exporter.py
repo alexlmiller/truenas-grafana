@@ -29,7 +29,7 @@ Usage:
     ./truenas-exporter.py --config /etc/truenas-exporter/config.yaml
     ./truenas-exporter.py --config config.yaml --port 9814
 
-Repository: https://github.com/levlaz/truenas-grafana
+Repository: https://github.com/alexlmiller/truenas-grafana
 License: MIT
 """
 
@@ -657,7 +657,7 @@ Examples:
   %(prog)s --config config.yaml --port 9814
   %(prog)s --config config.yaml --debug
 
-Repository: https://github.com/levlaz/truenas-grafana
+Repository: https://github.com/alexlmiller/truenas-grafana
         """,
     )
     parser.add_argument(
