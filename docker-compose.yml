@@ -1,0 +1,29 @@
+# TrueNAS Exporters - Docker Compose
+#
+# Quick start:
+#   1. Copy exporter/config.example.yaml to config.yaml
+#   2. Edit config.yaml with your TrueNAS API token
+#   3. Run: docker-compose up -d
+#
+# Ports:
+#   9814 - truenas-exporter metrics (replication, apps, VMs)
+#   2003 - Graphite receiver (configure TrueNAS to send here)
+#   9108 - graphite_exporter Prometheus metrics (CPU, memory, disk, etc.)
+
+services:
+  truenas-exporter:
+    build: .
+    container_name: truenas-exporter
+    restart: unless-stopped
+    ports:
+      - "9814:9814"   # truenas-exporter metrics
+      - "2003:2003"   # Graphite receiver
+      - "9108:9108"   # graphite_exporter metrics
+    volumes:
+      - ./config.yaml:/etc/truenas-exporter/config.yaml:ro
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9814/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

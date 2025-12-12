@@ -19,7 +19,30 @@ Complete monitoring solution for TrueNAS systems using Prometheus and Grafana.
 
 ## Quick Start
 
-### 1. Install the TrueNAS Exporter
+### Option A: Docker (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/alexlmiller/truenas-grafana.git
+cd truenas-grafana
+
+# Create configuration
+cp exporter/config.example.yaml config.yaml
+nano config.yaml  # Add your TrueNAS API token
+
+# Start the exporters
+docker-compose up -d
+
+# Verify it's working
+curl http://localhost:9814/health
+curl http://localhost:9108/metrics | head
+```
+
+See [docker/README.md](docker/README.md) for detailed Docker documentation.
+
+### Option B: Manual Installation
+
+#### 1. Install the TrueNAS Exporter
 
 ```bash
 # Clone the repository
@@ -44,7 +67,7 @@ sudo systemctl enable --now truenas-exporter
 curl http://localhost:9814/metrics
 ```
 
-### 2. Configure TrueNAS API Token
+#### 2. Configure TrueNAS API Token
 
 1. Log into TrueNAS web UI
 2. Go to top-right user menu → **API Keys**
@@ -52,7 +75,7 @@ curl http://localhost:9814/metrics
 4. Name it (e.g., "prometheus-exporter")
 5. Copy the token and add it to `/etc/truenas-exporter/config.yaml`
 
-### 3. (Optional) Install Graphite Exporter
+#### 3. (Optional) Install Graphite Exporter
 
 For system metrics (CPU, memory, disk I/O, etc.):
 
@@ -71,7 +94,7 @@ sudo systemctl enable --now graphite-exporter
 # Set hostname to your monitoring server IP
 ```
 
-### 4. Configure Prometheus
+### Configure Prometheus
 
 Add to your `prometheus.yml`:
 
@@ -83,7 +106,7 @@ scrape_configs:
       - targets: ['localhost:9108']  # Graphite exporter (optional)
 ```
 
-### 5. Import Grafana Dashboard
+### Import Grafana Dashboard
 
 1. In Grafana, go to **Dashboards** → **Import**
 2. Upload `grafana/dashboards/truenas-overview.json`
