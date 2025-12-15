@@ -172,6 +172,8 @@ See [docs/METRICS.md](docs/METRICS.md) for complete metrics documentation.
 | `interface_octets` | Network traffic |
 | `ups_charge_percent` | UPS battery level |
 
+> **Note:** The graphite mapping configuration includes drop rules that filter out ~1,200 unused metrics (cgroup pressure/throttling, interface state) to reduce CPU overhead by ~50%. If you need these metrics, see [graphite/README.md](graphite/README.md#re-enabling-dropped-metrics) for how to re-enable them.
+
 ## Alerting
 
 Pre-configured alerts in `prometheus/alerts/truenas.rules.yml`:

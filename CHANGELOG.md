@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-12-15
+
+### Added
+- Drop rules in graphite_mapping.conf to reduce CPU overhead by ~50%
+  - Drops ~1,060 unused cgroup metrics (pressure, throttling, detailed memory)
+  - Drops ~150+ unused interface state metrics (operstate, carrier, duplex)
+  - Keeps metrics used by dashboard (cgroup_cpu_percent, cgroup_mem, interface_*)
+- Performance tuning documentation in graphite/README.md
+
+### Changed
+- graphite_mapping.conf now processes drop rules first before other mappings
+
 ## [1.0.0] - 2025-12-11
 
 ### Added
