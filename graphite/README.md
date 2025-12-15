@@ -81,6 +81,52 @@ scrape_configs:
           job: 'truenas'
 ```
 
+## Performance Tuning
+
+The mapping configuration includes **drop rules** that filter out unused TrueNAS metrics early, reducing CPU overhead by approximately 50%.
+
+### What Gets Dropped
+
+TrueNAS sends 1,000+ metrics, but dashboards only use a subset. The drop rules filter:
+
+**Cgroup Metrics (~1,060 series):**
+- `cgroup_*_pressure` - CPU/IO/memory pressure metrics
+- `cgroup_*_stall_time` - Stall duration metrics
+- `cgroup_mem_*` - Detailed memory (usage_limit, utilization, pgfaults, writeback)
+- `cgroup_io_*` - IO usage, serviced ops
+- `cgroup_throttled_*` - CPU throttling metrics
+
+**Interface State Metrics (~150+ series):**
+- `net_operstate` - Interface up/down state
+- `net_carrier` - Carrier detect state
+- `net_duplex` - Full/half duplex state
+
+### What's Kept
+
+Metrics used by the included Grafana dashboard:
+- `cgroup_cpu_percent` - Container/service CPU usage
+- `cgroup_mem` - Container/service memory usage
+- `interface_*` - Network traffic (errors, octets, packets)
+- All CPU, memory, disk, ZFS, and UPS metrics
+
+### Re-enabling Dropped Metrics
+
+To re-enable any metric, edit `graphite_mapping.conf` and comment out or remove the corresponding drop rule at the top of the file. For example:
+
+```yaml
+# Comment out to re-enable pressure metrics:
+# - match: 'servers\..*\.truenas-cgroup_(cpu_full_pressure|...'
+#   match_type: "regex"
+#   name: "dropped_cgroup_pressure"
+#   action: drop
+```
+
+Then restart the graphite_exporter:
+
+```bash
+sudo systemctl restart graphite-exporter
+```
+
 ## Troubleshooting
 
 ### No metrics appearing
